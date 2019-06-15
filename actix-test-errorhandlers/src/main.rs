@@ -10,7 +10,9 @@ use std::path::Path;
 
 // NOTE: This works when the path to 404.html is hardcoded but we need to
 // somehow pass the static_root PathBuf to the handler instead
-fn not_found<B>(res: dev::ServiceResponse<B>) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
+fn not_found<B>(
+    res: dev::ServiceResponse<B>,
+) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
     let mut fh = File::open("public/404.html").unwrap();
     let mut buf: Vec<u8> = vec![];
     let _ = fh.read_to_end(&mut buf);
@@ -38,13 +40,16 @@ fn main() -> io::Result<()> {
     let sys = actix_rt::System::new("actix-test-errorhandlers");
 
     HttpServer::new(move || {
-        let error_handlers = ErrorHandlers::new().handler(http::StatusCode::NOT_FOUND, not_found);
+        let error_handlers = ErrorHandlers::new()
+            .handler(http::StatusCode::NOT_FOUND, not_found);
 
-        App::new().wrap(error_handlers).service(
-            fs::Files::new("/", &static_root)
-                .show_files_listing()
-                .index_file("index.html"),
-        )
+        App::new()
+            .wrap(error_handlers)
+            .service(
+                fs::Files::new("/", &static_root)
+                    .show_files_listing()
+                    .index_file("index.html"),
+            )
     })
     .bind(address)?
     .start();
