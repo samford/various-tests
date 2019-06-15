@@ -16,10 +16,10 @@ fn not_found<B>(
     res: dev::ServiceResponse<B>,
 ) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
     let error_files: &ErrorFilePaths = res.request().app_data().unwrap();
-    
-    let mut fh = File::open(&error_files.not_found).unwrap();
+
+    let mut fh = File::open(&error_files.not_found)?;
     let mut buf: Vec<u8> = vec![];
-    let _ = fh.read_to_end(&mut buf);
+    let _ = fh.read_to_end(&mut buf)?;
 
     let new_resp = HttpResponse::build(http::StatusCode::NOT_FOUND)
         .header(
