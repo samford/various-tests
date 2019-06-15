@@ -6,14 +6,13 @@ use actix_web::middleware::errhandlers::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::{dev, http, App, HttpResponse, HttpServer};
 use std::fs::File;
 use std::io::{self, Read};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-// NOTE: This works when the path to 404.html is hardcoded but we need to
-// somehow pass the static_root PathBuf to the handler instead
 fn not_found<B>(
     res: dev::ServiceResponse<B>,
 ) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
-    let mut fh = File::open("public/404.html").unwrap();
+    let rendered_template: &PathBuf = res.request().app_data().unwrap();
+    let mut fh = File::open(rendered_template).unwrap();
     let mut buf: Vec<u8> = vec![];
     let _ = fh.read_to_end(&mut buf);
 
@@ -44,6 +43,7 @@ fn main() -> io::Result<()> {
             .handler(http::StatusCode::NOT_FOUND, not_found);
 
         App::new()
+            .data(static_root.join("404.html"))
             .wrap(error_handlers)
             .service(
                 fs::Files::new("/", &static_root)
