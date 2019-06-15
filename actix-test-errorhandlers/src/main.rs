@@ -8,11 +8,16 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
 
+struct ErrorFilePaths {
+    not_found: PathBuf,
+}
+
 fn not_found<B>(
     res: dev::ServiceResponse<B>,
 ) -> Result<ErrorHandlerResponse<B>, actix_web::Error> {
-    let rendered_template: &PathBuf = res.request().app_data().unwrap();
-    let mut fh = File::open(rendered_template).unwrap();
+    let error_files: &ErrorFilePaths = res.request().app_data().unwrap();
+    
+    let mut fh = File::open(&error_files.not_found).unwrap();
     let mut buf: Vec<u8> = vec![];
     let _ = fh.read_to_end(&mut buf);
 
@@ -43,7 +48,9 @@ fn main() -> io::Result<()> {
             .handler(http::StatusCode::NOT_FOUND, not_found);
 
         App::new()
-            .data(static_root.join("404.html"))
+            .data(ErrorFilePaths {
+                not_found: static_root.join("404.html"),
+            })
             .wrap(error_handlers)
             .service(
                 fs::Files::new("/", &static_root)
